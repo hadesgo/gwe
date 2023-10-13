@@ -1,19 +1,17 @@
 package gwe
 
 import (
-	"fmt"
 	"net/http"
 )
 
-type HanderFunc func(http.ResponseWriter, *http.Request)
+type HanderFunc func(*Context)
 
 type Engine struct {
-	router map[string]HanderFunc
+	router *router
 }
 
 func (engine *Engine) addRoute(method string, pattern string, handler HanderFunc) {
-	key := method + "-" + pattern
-	engine.router[key] = handler
+	engine.router.addRoute(method, pattern, handler)
 }
 
 func (engine *Engine) GET(pattern string, handler HanderFunc) {
@@ -25,13 +23,8 @@ func (engine *Engine) POST(pattern string, handler HanderFunc) {
 }
 
 func (engine *Engine) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	key := r.Method + "-" + r.URL.Path
-	if handler, ok := engine.router[key]; ok {
-		handler(w, r)
-	} else {
-		w.WriteHeader(http.StatusNotFound)
-		fmt.Fprintf(w, "404 NOT FOUND: %s\n", r.URL)
-	}
+	c := newContext(w, r)
+	engine.router.handle(c)
 }
 
 func (engine *Engine) Run(addr string) (err error) {
@@ -39,5 +32,5 @@ func (engine *Engine) Run(addr string) (err error) {
 }
 
 func New() *Engine {
-	return &Engine{router: map[string]HanderFunc{}}
+	return &Engine{router: newRouter()}
 }
