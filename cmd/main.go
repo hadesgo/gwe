@@ -6,18 +6,24 @@ import (
 )
 
 func main() {
-	engine := gwe.New()
-	engine.GET("/", func(ctx *gwe.Context) {
-		ctx.HTML(http.StatusOK, "<h1>Hello Gwe</h1>")
+	r := gwe.New()
+	r.GET("/", func(c *gwe.Context) {
+		c.HTML(http.StatusOK, "<h1>Hello Gee</h1>")
 	})
-	engine.GET("/hello", func(ctx *gwe.Context) {
-		ctx.String(http.StatusOK, "hello %s, you're at %s\n", ctx.Query("name"), ctx.Path)
+
+	r.GET("/hello", func(c *gwe.Context) {
+		// expect /hello?name=geektutu
+		c.String(http.StatusOK, "hello %s, you're at %s\n", c.Query("name"), c.Path)
 	})
-	engine.POST("/login", func(ctx *gwe.Context) {
-		ctx.JSON(http.StatusOK, gwe.H{
-			"username": ctx.PostForm("username"),
-			"password": ctx.PostForm("password"),
-		})
+
+	r.GET("/hello/:name", func(c *gwe.Context) {
+		// expect /hello/geektutu
+		c.String(http.StatusOK, "hello %s, you're at %s\n", c.Param("name"), c.Path)
 	})
-	engine.Run(":8000")
+
+	r.GET("/assets/*filepath", func(c *gwe.Context) {
+		c.JSON(http.StatusOK, gwe.H{"filepath": c.Param("filepath")})
+	})
+
+	r.Run(":8000")
 }
